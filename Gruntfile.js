@@ -15,6 +15,9 @@ module.exports = function (grunt) {
     // Time how long tasks take. Can help when optimizing build times
     require('time-grunt')(grunt);
 
+    // assemble addition
+    grunt.loadNpmTasks('assemble');
+
     // Define the configuration for all the tasks
     grunt.initConfig({
 
@@ -27,6 +30,10 @@ module.exports = function (grunt) {
 
         // Watches files for changes and runs tasks based on the changed files
         watch: {
+            assemble: {
+                files: ['<%= yeoman.app %>/{,*/}*.hbs','<%= yeoman.app %>/{,*/}*.json'],
+                tasks: ['assemble:dist']
+            },
             js: {
                 files: ['<%= yeoman.app %>/scripts/{,*/}*.js'],
                 tasks: ['jshint'],
@@ -54,10 +61,27 @@ module.exports = function (grunt) {
                     livereload: '<%= connect.options.livereload %>'
                 },
                 files: [
-                    '<%= yeoman.app %>/{,*/}*.html',
+                    '{.tmp,<%= yeoman.app %>}/*.html',
                     '.tmp/styles/{,*/}*.css',
                     '<%= yeoman.app %>/images/{,*/}*.{gif,jpeg,jpg,png,svg,webp}'
                 ]
+            }
+        },
+
+        // the assemble task
+        assemble: {
+            options: {
+                data: '<%= yeoman.app %>/config.json',
+                partials: '<%= yeoman.app %>/partials/*.hbs',
+                layout: '<%= yeoman.app %>/layout.hbs'
+            },
+            dist: {
+                files: [{
+                    expand: true,
+                    cwd: '<%= yeoman.app %>',
+                    src: ['{,*/}*.hbs', '!layout.hbs', '!partials/*.hbs'],
+                    dest: '.tmp/'
+                }]
             }
         },
 
@@ -212,7 +236,7 @@ module.exports = function (grunt) {
             options: {
                 dest: '<%= yeoman.dist %>'
             },
-            html: '<%= yeoman.app %>/index.html'
+            html: ['.tmp/*.html']
         },
 
         // Performs rewrites based on rev and the useminPrepare configuration
@@ -337,7 +361,8 @@ module.exports = function (grunt) {
         concurrent: {
             server: [
                 'compass:server',
-                'copy:styles'
+                'copy:styles',
+                'assemble:dist'
             ],
             test: [
                 'copy:styles'
@@ -388,6 +413,7 @@ module.exports = function (grunt) {
 
     grunt.registerTask('build', [
         'clean:dist',
+        'assemble:dist',
         'useminPrepare',
         'concurrent:dist',
         'autoprefixer',
